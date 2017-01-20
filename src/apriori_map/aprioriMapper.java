@@ -18,14 +18,8 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
                 	//System.out.println(item);
                 	 word.set(item);
                 	 context.write(word, one);
-                	// allitems = allitems + item;
-
                 }
                 
-              //  System.err.println("aprioriReducer End"); 
-        	    //  while (itr.hasMoreTokens()) {
-        	//              word.set(itr.nextToken());
-        	//              context.write(word, one); //maps words
-                     //      }               
+                apriori.total_read += 1;       
         }
 };
