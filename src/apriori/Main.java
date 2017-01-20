@@ -17,7 +17,7 @@ public class Main {
 	public static double supportThreshold = 0.05;
 	public static int passNumber = 1;
 	
-	// Create candidate set using item numbers of frequent items
+	// Create candidate set
 	private static void getCandidatePairs() {
 		candidatePairs = new ArrayList<ArrayList>(); // a list of lists
 		List<Integer> pair = new ArrayList<Integer>();
