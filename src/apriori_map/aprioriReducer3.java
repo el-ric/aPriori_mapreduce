@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 
 public class aprioriReducer3 extends Reducer<Text,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
+        private static int passNum = apriori.passNumber;
     	
         public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
 
@@ -18,7 +19,7 @@ public class aprioriReducer3 extends Reducer<Text,IntWritable,Text,IntWritable> 
                         sum += val.get(); //counts the number of instances of each word
                 }
 
-          	if (apriori.checkSupport(sum,apriori.total_read[1])) {
+          	if (apriori.checkSupport(sum,apriori.total_read[passNum])) {
             	   result.set(sum);
                    context.write(key, result);      
                }

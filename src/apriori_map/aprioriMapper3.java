@@ -9,14 +9,12 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;  
 import org.apache.hadoop.mapreduce.Mapper;
 
-
-
-
 public class aprioriMapper3 extends Mapper<Object, Text, Text, IntWritable> {
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
-     
+        private static int passNum = apriori.passNumber;
+
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {    
             //System.err.println("apriorimapper 3 start"); 
             String[] itr = value.toString().split(","); //Break string into words
@@ -32,12 +30,12 @@ public class aprioriMapper3 extends Mapper<Object, Text, Text, IntWritable> {
 	            	//System.err.println(itr[i] +"|" + i);
 	            	for(int j=i+1;j<size;j++){
 	            		int k = 0;    		
-	                   // System.err.println("value" + itr[i]); 
-	                    if (apriori.frequent_items.contains(itr[i]) && apriori.frequent_items.contains(itr[j])) {
+	                    //System.err.println("value" + itr[i]); 
+	                    if (apriori.freqItems.contains(itr[i]) && apriori.freqItems.contains(itr[j])) {
 		            		join_items[k] = itr[i]; 
 		            		join_items[k +1] = itr[j];
 		            		String basket = String.join(",", join_items);
-		            	//	System.err.println("New basket" + basket ); 
+		            		//System.err.println("New basket" + basket ); 
 		            		word.set(basket);
 		                	context.write(word, one);
 		                	
@@ -50,7 +48,7 @@ public class aprioriMapper3 extends Mapper<Object, Text, Text, IntWritable> {
 	            }
             
             
-	            apriori.total_read[1] = apriori.total_read[1] + 1;   
+	            apriori.total_read[passNum] = apriori.total_read[passNum] + 1;   
             //System.err.println("apriorimapper 3 End"); 
           
         }
