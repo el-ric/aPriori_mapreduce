@@ -19,12 +19,8 @@ public class aprioriReducer3 extends Reducer<Text,IntWritable,Text,IntWritable> 
                 }
 
           	if (apriori.checkSupport(sum,apriori.total_read[1])) {
-            	 
             	   result.set(sum);
-                   context.write(key, result);
-                   
+                   context.write(key, result);      
                }
-
-        }
-        
+        }      
 }
