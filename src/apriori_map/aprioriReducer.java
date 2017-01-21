@@ -18,7 +18,7 @@ public class aprioriReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
             }
 
             	
-        	if (apriori.checkSupport(sum,apriori.total_read[passNum])) {
+        	if (apriori.checkFrequency(sum,apriori.total_read[passNum])) {
                result.set(sum);
                context.write(key, result);
  

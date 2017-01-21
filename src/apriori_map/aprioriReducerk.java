@@ -17,7 +17,7 @@ public class aprioriReducerk extends Reducer<Text,IntWritable,Text,IntWritable> 
         		sum += val.get(); //counts the number of instances of each word
             }
         	
-        	if (apriori.checkSupport(sum,apriori.total_read[passNum])) {
+        	if (apriori.checkFrequency(sum,apriori.total_read[passNum])) {
                result.set(sum);
                context.write(key, result);
  

@@ -2,6 +2,7 @@ package apriori_map;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.hadoop.io.IntWritable;  
 import org.apache.hadoop.io.Text;  
@@ -23,12 +24,18 @@ public class aprioriMapperk extends Mapper<Object, Text, Text, IntWritable> {
         			String candidateItem = candidateItemset.get(i);
         			String[] check = candidateItem.split(",");
         			
+        			String[] lines = line.split(",");
+        			Arrays.sort(lines);
+        			line = String.join(",", lines);
+        			
         			boolean flag = true;
         			for(int j=0; j<check.length; j++)
         				if(!line.contains(check[j]))
         					flag = false;
         			
-        			if(flag) {
+        			if(flag == true) {
+        				Arrays.sort(check);
+        				candidateItem = String.join(",", check);
         				Text toAdd = new Text(candidateItem);
         				context.write(toAdd, one);
         			}
@@ -42,4 +49,5 @@ public class aprioriMapperk extends Mapper<Object, Text, Text, IntWritable> {
                 
             apriori.total_read[passNum] = apriori.total_read[passNum] + 1;       
         }
+       
 };

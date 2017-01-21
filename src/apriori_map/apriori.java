@@ -22,13 +22,38 @@ public class apriori {
 	public static String outputFolder = "mapreduce";
 	public static String outputFile;
 	public static double supportThreshold = 0.1;
-	public static int supportFrequency = 70;
+	public static int supportFrequency = 100;
 	public static int total_read[] = new int[50];
 	public static int passNumber;
 	public static String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
 	public static ArrayList<String> freqItems, candidateItems;
 	public static ArrayList<Map<String, Integer>> allFrequentItemsets = new ArrayList<Map<String, Integer>>();
     
+	private static int checkResults(String string) {
+		int count=0;
+		try {
+			BufferedReader bReader = new BufferedReader(new FileReader(inputFile));
+			String line;
+			while ((line = bReader.readLine()) != null) {
+				String[] items = string.split(",");
+				
+				Boolean flag = true;
+				for(int k=0; k<items.length; k++) {	
+					if(!line.contains(items[k]))
+						flag = false;
+				}
+				
+				if(flag)
+					count += 1;
+			}
+			bReader.close();
+		}
+		catch (Exception e) {
+			System.out.println("Error reading input file.");
+		}
+		return count;
+	}
+	
 	private static void readFrequentItemsFromFile(String filename) {
 		freqItems = new ArrayList<String>();
 		Map<String, Integer> freqItemset = new HashMap<String, Integer>();
@@ -56,16 +81,9 @@ public class apriori {
 	}
 	
 	private static String combineStrings(String[] strings) {
-		String combinedString = "";
-		
-		for(int i=0; i<strings.length;i++) {
-			if(i==0)
-				combinedString += strings[i];
-			else
-				combinedString += "," + strings[i];
-		}
-		
-		return combinedString;
+		Arrays.sort(strings);
+		Arrays.stream(strings).distinct();
+		return String.join(",", strings);
 	}
 	
 	private static void getCandidateItems() {
@@ -77,10 +95,10 @@ public class apriori {
 			String subString = combineStrings(Arrays.copyOfRange(items, 1, items.length));
 			
 			for(int j=i+1; j<freqItems.size(); j++) {
-				if(freqItems.get(j).contains(subString)) {
-						
+				String tempItemset = freqItems.get(j);
+				if(tempItemset.contains(subString) && !tempItemset.contains(firstWord)) {
 					//Check 3rd condition - do later. For now, assume candidate pair
-					String lastWord = freqItems.get(j).split(",")[items.length-1];
+					String lastWord = tempItemset.split(",")[items.length-1];
 					
 					//Check if first and last word is in the code
 					Boolean isCandidate = false;
@@ -90,7 +108,7 @@ public class apriori {
 						}
 					}
 					if(isCandidate) {
-						String[] newSet = {firstWord,freqItems.get(j)};
+						String[] newSet = {firstWord,tempItemset};
 						String newCandidate = combineStrings(newSet);
 						if(!candidateItems.contains(newCandidate)) {
 							candidateItems.add(newCandidate);
@@ -102,7 +120,7 @@ public class apriori {
 	}
 	
 	
-	public static boolean checkSupport(int sum, int total) {
+	public static boolean checkFrequency(int sum, int total) {
 		/*boolean isFrequent;
 		
 		double s = 1.0 * sum/total;
@@ -159,61 +177,66 @@ public class apriori {
 			}
 	}
 	
-	public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
-
+	private static void findFrequentItems() {
 		try {
-		Configuration conf = new Configuration();
-		
-        String[] otherArgs;
-		otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		
-		passNumber = 1;
-		String outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
-		boolean success = createJob(inputFile, outputDir,"apriori_map.aprioriMapper","apriori_map.aprioriReducer",conf);
-		outputFile = "./"  + outputDir + "/part-r-00000";
-		if(success == true){
-	           System.err.println("\nPass 1 Completed Succesfully\n");
-	    }
-		readFrequentItemsFromFile(outputFile);
-		getCandidateItems();
-		
-		passNumber = 2;
-		getFrequentPairs(outputFile);
-		outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
-		outputFile = "./"  + outputDir + "/part-r-00000";
-		success = createJob(inputFile, outputDir,"apriori_map.aprioriMapper3","apriori_map.aprioriReducer3",conf);
-		if(success == true){
-	           System.err.println("\nPass 2 Completed Succesfully\n");
-	    }
-		readFrequentItemsFromFile(outputFile);
-		//System.out.println("Frequent Items " + freqItems);
-		getCandidateItems();
-		//System.out.println("\n============== Candidate Items ============\n " + candidateItems);
-		
-		passNumber = 3;
-		while(candidateItems.size() > 0) {
-			outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
+			Configuration conf = new Configuration();
 			
-			success = createJob(inputFile, outputDir,"apriori_map.aprioriMapperk","apriori_map.aprioriReducerk",conf);
+	        /*String[] otherArgs;
+			otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();*/
+			
+			passNumber = 1;
+			String outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
+			boolean success = createJob(inputFile, outputDir,"apriori_map.aprioriMapper","apriori_map.aprioriReducer",conf);
 			outputFile = "./"  + outputDir + "/part-r-00000";
-			if(success == true) {
-		        System.err.println("\nPass " + passNumber + " Completed Succesfully\n");
+			if(success == true){
+		           System.err.println("\nPass 1 Completed Succesfully\n");
 		    }
-			else {
-				System.err.println("\nPass " + passNumber + " Failed \n");
-			}
-			
-			outputFile = "./"  + outputDir + "/part-r-00000";
 			readFrequentItemsFromFile(outputFile);
 			getCandidateItems();
 			
-			passNumber += 1;
+			passNumber = 2;
+			getFrequentPairs(outputFile);
+			outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
+			outputFile = "./"  + outputDir + "/part-r-00000";
+			success = createJob(inputFile, outputDir,"apriori_map.aprioriMapper3","apriori_map.aprioriReducer3",conf);
+			if(success == true){
+		           System.err.println("\nPass 2 Completed Succesfully\n");
+		    }
+			readFrequentItemsFromFile(outputFile);
+			//System.out.println("Frequent Items " + freqItems);
+			getCandidateItems();
+			//System.out.println("\n============== Candidate Items ============\n " + candidateItems);
+			
+			passNumber = 3;
+			while(candidateItems.size() > 0) {
+				outputDir = outputFolder + "/" + timeStamp + "/" + passNumber;
+				
+				success = createJob(inputFile, outputDir,"apriori_map.aprioriMapperk","apriori_map.aprioriReducerk",conf);
+				outputFile = "./"  + outputDir + "/part-r-00000";
+				if(success == true) {
+			        System.err.println("\nPass " + passNumber + " Completed Succesfully\n");
+			    }
+				else {
+					System.err.println("\nPass " + passNumber + " Failed \n");
+				}
+				
+				outputFile = "./"  + outputDir + "/part-r-00000";
+				readFrequentItemsFromFile(outputFile);
+				getCandidateItems();
+				
+				passNumber += 1;
+			}
+			     
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		     
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
 		
-}
+	}
+	
+	public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
+
+		//findFrequentItems();
+		System.out.println(checkResults("other vegetables,tropical fruit,whole milk"));
+	}
 }
