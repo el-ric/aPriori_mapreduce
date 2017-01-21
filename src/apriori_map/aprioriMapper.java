@@ -10,8 +10,9 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
+        
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-        	   System.err.println("value" + value.toString());     
+        	 //System.err.println("value" + value.toString());     
         	String[] itr = value.toString().split(","); //Break string into words
                 //System.err.println("aprioriMapper Start");
                 for(String item: itr){ 
@@ -20,6 +21,6 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
                 	 context.write(word, one);
                 }
                 
-                apriori.total_read += 1;       
+                apriori.total_read[0] = apriori.total_read[0] + 1;       
         }
 };

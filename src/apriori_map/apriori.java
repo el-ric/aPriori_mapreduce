@@ -28,11 +28,30 @@ public class apriori {
 	public static Map<ArrayList<String>, Integer> frequentPairs;
 	public static int totalBaskets, numOfItems;
 	public static double confidenceThreshold = 2;
-	public static double supportThreshold = 0.005;
+	public static double supportThreshold = 0.01;
 	public static int passNumber = 1;
-	public static int total_read = 0;
-	
-	
+	public static int total_read[] = new int[10];
+	public static String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
+	public static ArrayList<String> frequent_items = new ArrayList<String>();
+    
+	private static void gettotalBaskets() {
+		try {
+			 //System.err.println("Output file: " + apriori.outputFile ); 
+			BufferedReader bReader = new BufferedReader(new FileReader(outputFile));
+			String line;
+			
+			while ((line = bReader.readLine()) != null) {
+				String toAdd = new String();
+				toAdd = line.split("\\t")[0];
+				frequent_items.add(toAdd);
+			}
+			bReader.close();
+		}
+		catch (Exception e) {
+			System.out.println("Error reading input file.");
+		}
+	}
+    
 	private static boolean areItemsInBasket(ArrayList<String> items, String[] basket) {
 		boolean itemsPresent = true, isPresent;
 		
@@ -48,7 +67,7 @@ public class apriori {
 		
 		return itemsPresent;
 	}
-	
+	/*
 	private static void findFrequentPairs() {
 		frequentPairs = new HashMap<ArrayList<String>, Integer>();
 		
@@ -78,7 +97,7 @@ public class apriori {
 		}
 			
 		System.out.println("Frequent Pairs = " + frequentPairs);
-	}
+	}*/
 	
 	// Create candidate set using item numbers of frequent items
 	private static void getCandidatePairs() {
@@ -98,26 +117,13 @@ public class apriori {
 		System.out.println("Candidate Pairs = " + candidatePairs);
 	}
 
-	private static void gettotalBaskets() {
-		try {
-			BufferedReader bReader = new BufferedReader(new FileReader(inputFile));
-			int count = 0;
-			while ((bReader.readLine()) != null) {
-				count++;
-			}
-			totalBaskets = count;
-			bReader.close();
-		}
-		catch (Exception e) {
-			System.out.println("Error reading input file.");
-		}
-	}
+	
 	
 
 	
-	private static boolean checkSupport(int sum) {
+	public static boolean checkSupport(int sum, int total) {
 		boolean isFrequent;
-		double s = 1.0 * sum/apriori.total_read;
+		double s = 1.0 * sum/total;
 		if(s >=  apriori.supportThreshold)
 			isFrequent = true;
 		else
@@ -127,7 +133,7 @@ public class apriori {
 		
 		
 	}
-	
+	/*
 	private static void findFrequentItems() {
 		
 		frequentItems = new HashMap<String, Integer>();
@@ -154,10 +160,58 @@ public class apriori {
 		catch (Exception e) {
 			System.out.println("Error reading map reduce file");
 		}
+	}*/
+	
+	public static boolean createJob(String input, String output,Object aprioriMapper, Object aprioriReducer,  Configuration conf){
+		boolean success = false;
+		
+		try {
+	        @SuppressWarnings("deprecation")
+	       Job job = new Job(conf, "aprior");
+	       job.setJarByClass(apriori.class); //Tell hadoop the name of the class every cluster has to look for
+	       
+	       job.setMapperClass(aprioriMapper.class); //Set class that will be executed by the mapper
+	       job.setReducerClass(aprioriReducer.class); //Set the class that will be executed as the reducer
+	      
+	       job.setOutputKeyClass(Text.class); //Set the class to be used as the key for outputting data to the user
+	       job.setOutputValueClass(IntWritable.class); //Set class that will be used as the vaue for outputting data
+	     
+	       FileInputFormat.addInputPath(job,  new Path(input)); //Get input file name
+	       FileOutputFormat.setOutputPath(job, new Path(output));
+		
+	       success = job.waitForCompletion(true);
+		} catch (IOException | ClassNotFoundException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	       return success;
 	}
 	
-	
-	public static void main(String[] args) {
+	public static boolean createJob2(String input, String output,Object aprioriMapper, Object aprioriReducer,  Configuration conf){
+		boolean success = false;
+		
+		try {
+	        @SuppressWarnings("deprecation")
+	       Job job = new Job(conf, "aprior");
+	       job.setJarByClass(apriori.class); //Tell hadoop the name of the class every cluster has to look for
+	       
+	       job.setMapperClass(aprioriMapper3.class); //Set class that will be executed by the mapper
+	       job.setReducerClass(aprioriReducer3.class); //Set the class that will be executed as the reducer
+	      
+	       job.setOutputKeyClass(Text.class); //Set the class to be used as the key for outputting data to the user
+	       job.setOutputValueClass(IntWritable.class); //Set class that will be used as the vaue for outputting data
+	     
+	       FileInputFormat.addInputPath(job,  new Path(input)); //Get input file name
+	       FileOutputFormat.setOutputPath(job, new Path(output));
+		
+	       success = job.waitForCompletion(true);
+		} catch (IOException | ClassNotFoundException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	       return success;
+	}
+	public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
 
 		
 //		gettotalBaskets();
@@ -166,7 +220,7 @@ public class apriori {
 //		findFrequentPairs();
 
 		
-		String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
+
 		try {
 		Configuration conf = new Configuration();
         String[] otherArgs;
@@ -182,29 +236,23 @@ public class apriori {
         System.err.println("Output: " + otherArgs[1]);
         String inputDir = otherArgs[0];
         String outputTempDir1 = otherArgs[1] + "/" + timeStamp + "/Temp/1";
-       
+        String outputTempDir2 = otherArgs[1] + "/" + timeStamp + "/Temp/2"; 
+        outputFile = "./"  + outputTempDir1 + "/part-r-00000";
         //Start new job to get frequent items
-        @SuppressWarnings("deprecation")
-       Job job = new Job(conf, "aprior");
-       job.setJarByClass(apriori.class); //Tell hadoop the name of the class every cluster has to look for
-       
-       job.setMapperClass(aprioriMapper.class); //Set class that will be executed by the mapper
-       job.setReducerClass(aprioriReducer.class); //Set the class that will be executed as the reducer
-      
-       job.setOutputKeyClass(Text.class); //Set the class to be used as the key for outputting data to the user
-       job.setOutputValueClass(IntWritable.class); //Set class that will be used as the vaue for outputting data
-     
-       FileInputFormat.addInputPath(job,  new Path(inputDir)); //Get input file name
-       FileOutputFormat.setOutputPath(job, new Path(outputTempDir1));
-       
-       boolean success = job.waitForCompletion(true);
-       if(success == true){
-    	   System.err.println("Job finished succesfully");
-       }
+        boolean success = createJob(inputDir, outputTempDir1,aprioriMapper.class,aprioriReducer.class,conf);
+        if(success == true){
+           System.err.println("Job finished succesfully");
+        }
+        gettotalBaskets();
 
-
+        System.out.println("===================Frequent Items=================" + frequent_items);
+      //Start new job to get frequent items
+        boolean success2 = createJob2(inputDir, outputTempDir2,aprioriMapper3.class,aprioriReducer.class,conf);
+        if(success2 == true){
+     	   System.err.println("Job finished succesfully");
+        }
      
-	} catch (IOException | ClassNotFoundException | InterruptedException e) {
+	} catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
