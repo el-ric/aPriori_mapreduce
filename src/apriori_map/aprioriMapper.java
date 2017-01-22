@@ -11,12 +11,12 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
-        private static int passNum = apriori.passNumber;
-        public static ArrayList<String> candidateItemset = apriori.candidateItems;        
+        private static int passNum = Apriori.passNumber;
+        public static ArrayList<String> candidateItemset = Apriori.candidateItems;        
         
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-        	passNum = apriori.passNumber;
-        	candidateItemset = apriori.candidateItems;   
+        	passNum = Apriori.passNumber;
+        	candidateItemset = Apriori.candidateItems;   
         	
         	if(passNum == 1) { // Perform word count for first pass
 	        	String[] itr = value.toString().split(","); //Break string into words
@@ -43,7 +43,7 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
         		}  
         	}
                 
-            apriori.total_read[passNum] = apriori.total_read[passNum] + 1;       
+            Apriori.total_read[passNum] = Apriori.total_read[passNum] + 1;       
         }
         
         private boolean isItemInBasket(String items, String basket) {
