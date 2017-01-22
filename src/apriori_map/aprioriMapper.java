@@ -2,21 +2,43 @@ package apriori_map;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;  
-import org.apache.hadoop.io.Text;  
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Mapper;
 
 public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
-        private static int passNum = Apriori.passNumber;
-        public static ArrayList<String> candidateItemset = Apriori.candidateItems;        
+        private static int passNum = 0;
+        private static int total_read = 0;
+        private static ArrayList<String> candidateItemsetMap  = new ArrayList<String>();        
         
+        public void configure(JobConf job) {
+        	passNum = job.getInt("apriori.passNumber",-10);
+        }
+        
+        @Override
+		public void setup(Context context) throws IOException {
+        	Configuration conf = context.getConfiguration();
+        	passNum = conf.getInt("passNumber",0);
+        	 
+        	if(passNum > 1){
+	        	String items_tmp = conf.get("candidateItems");
+	        	String[] items_array = items_tmp.split(";:");
+	        	this.candidateItemsetMap.clear();
+	        	for (int j=0;j< items_array.length; j++){
+	        		this.candidateItemsetMap.add(items_array[j]); 
+	        	}
+        	}
+        }
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-        	passNum = Apriori.passNumber;
-        	candidateItemset = Apriori.candidateItems;   
+
+        	//candidateItemset = apriori.candidateItems;   
         	
         	if(passNum == 1) { // Perform word count for first pass
 	        	String[] itr = value.toString().split(","); //Break string into words
@@ -27,8 +49,8 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
         	}
         	else {
            		String line = value.toString();
-        		for(int i=0; i<candidateItemset.size();i++) {
-        			String candidateItem = candidateItemset.get(i);
+        		for(int i=0; i<candidateItemsetMap.size();i++) {
+        			String candidateItem = candidateItemsetMap.get(i);
         			String[] check = candidateItem.split(",");
         			
         			boolean flag = true;
@@ -43,7 +65,7 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
         		}  
         	}
                 
-            Apriori.total_read[passNum] = Apriori.total_read[passNum] + 1;       
+        	context.getConfiguration().setInt("total_read", context.getConfiguration().getInt("total_read",0) + 1);       
         }
         
         private boolean isItemInBasket(String items, String basket) {
