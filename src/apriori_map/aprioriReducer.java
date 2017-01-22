@@ -16,12 +16,10 @@ public class aprioriReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
         	for (IntWritable val : values) {
         		sum += val.get(); //counts the number of instances of each word
             }
-
-            	
+ 	
         	if (apriori.checkFrequency(sum,apriori.total_read[passNum])) {
                result.set(sum);
                context.write(key, result);
- 
             }
         }
 }
