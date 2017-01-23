@@ -22,13 +22,30 @@ public class AssociationRules {
 		allFrequentItemsets = data;
 	}
 	
+	
+	 /*
+	   * Accepts: None
+	   * Returns: None
+	   * Purpose: Manages the generation of association rules based on the data
+	   */
+	public void findAssociationRules() {
+		try {
+			if(allFrequentItemsets.size() >= 2)
+				findRulesForPairs();
+			if(allFrequentItemsets.size() >= 3)
+				findRulesForTriples();
+			if(allFrequentItemsets.size() >= 4)
+				findRulesForQuadruples();
+		}
+		catch (NullPointerException e) {}
+	}
+	
 	 /*
 	   * Accepts: None
 	   * Returns: None
 	   * Purpose: Displays the results of the association rules in the console
 	   */
 	public void displayAssociationRules() {
-		findAssociationRules();
 		System.out.println("\n==== Association Rules ====\n");
 		for(int i=0; i<associationRules.size(); i++) {
 			String[] rule = associationRules.get(i);
@@ -42,35 +59,19 @@ public class AssociationRules {
 	   * Purpose: Writes all association rules to the specified file
 	   */
 	public void writeAssociationRulesToFile(String filename) { 
-		findAssociationRules();
 		    try { 
 		      BufferedWriter bWriter = new BufferedWriter(new FileWriter(filename)); 
 				for(int i=0; i<associationRules.size(); i++) {
 					String[] rule = associationRules.get(i);
 					bWriter.write(rule[0] + " -> " + rule[1] + "\t" + rule[2] + "\n");
 				}
+				 bWriter.close();
 		    } 
 		    catch (Exception e) { 
 		      System.out.println("Error reading input file."); 
 		    } 
+		   
 	} 
-	
-	 /*
-	   * Accepts: None
-	   * Returns: None
-	   * Purpose: Manages the generation of association rules based on the data
-	   */
-	private static void findAssociationRules() {
-		try {
-			if(allFrequentItemsets.size() >= 2)
-				findRulesForPairs();
-			if(allFrequentItemsets.size() >= 3)
-				findRulesForTriples();
-			if(allFrequentItemsets.size() >= 4)
-				findRulesForQuadruples();
-		}
-		catch (NullPointerException e) {}
-	}
 	
 	 /*
 	   * Accepts: An item set and a basket

@@ -262,8 +262,9 @@ public class Apriori {
    */
   public static void main(String[] args) throws InterruptedException, ClassNotFoundException { 
     findFrequentItems(); 
-    AssociationRules rules = new AssociationRules(allFrequentItemsets, confidence); 
-    rules.displayAssociationRules(); 
-    rules.writeAssociationRulesToFile(associationRulesOutput);
+    AssociationRules rules = new AssociationRules(allFrequentItemsets, confidence);
+    rules.findAssociationRules();  // This runs to code to find frequent items
+    rules.displayAssociationRules();  // This displays the results in the console
+    rules.writeAssociationRulesToFile(associationRulesOutput); // This writes the results to the specified file
   } 
 }
