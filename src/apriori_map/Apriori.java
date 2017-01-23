@@ -1,3 +1,8 @@
+/*
+ * Project: Big Data Project 2016/17
+ * Group Members: M2016201, M2016013, M2016014
+ * Objective: Generates association rules from a data set using Apriori algorithm and map reduce
+ */
 package apriori_map; 
 
 import java.io.BufferedReader; 
@@ -14,25 +19,34 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.util.*; 
  
 public class Apriori { 
-  /* ==== USER INPUT ==== */ 
+  /* ========================
+   * User Variables
+   * ======================== */
   public static double confidence = 0.05; 
-  public static int supportFrequency = 100; 
-  //public static double supportThreshold = 0.1; // Frequency as a fraction [Update checkFrequency() function accordingly] 
+  public static int supportFrequency = 100;
      
-  /* ==== Input/Output Folders ==== */ 
+  // Input/Output Folders 
   public static String inputFile = "data_for_project.txt"; 
   public static String outputFolder = "mapreduce"; 
-
-  /* ==== Global Variables ==== */ 
+  public static String associationRulesOutput = "Association Rules.txt";
+  
+  /* ========================
+   * Global Variables
+   * ======================== */
   public static String outputFile; 
   public static int total_read; 
   public static int passNumber; 
   public static String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date()); 
    
-  // Data Structures to store frequent itemset data 
+  // Data Structures to store frequent item set data 
   public static ArrayList<String> freqItems, candidateItems; 
   public static ArrayList<Map<String, Integer>> allFrequentItemsets = new ArrayList<Map<String, Integer>>(); 
 
+  /*
+   * Accepts: Basket and items
+   * Returns: True if items are in the basket, False if not
+   * Purpose: Used to generate candidate item sets from data from previous reducer based on Apriori Algorithm
+   */  
   private static boolean isItemInBasket(String items, String basket) { 
     String[] itemSet = items.split(","); 
     String[] basketSet = basket.split(","); 
@@ -49,8 +63,13 @@ public class Apriori {
     } 
      
     return isPresent; 
-  } 
- 
+  }
+  
+  /*
+   * Accepts: No input, but reads data from freqItems, which is populated using readFrequentItemsFromFile function
+   * Returns: Nothing 
+   * Purpose: Creates candidate item set of pairs from the frequent single items. Data used for 2nd Pass of Map Reduce
+   */ 
   private static void getFrequentPairs() { 
     candidateItems = new ArrayList<String>(); 
     for(int i=0; i<freqItems.size(); i++) { 
@@ -61,6 +80,14 @@ public class Apriori {
     } 
   } 
    
+  /*
+   * Accepts: Input filename to read reducer data from (assumes tab delimited data of 2 columns)
+   * Returns: None
+   * Purpose: 
+   * Reads reducer data from previous pass and stores the data in 2 data structures:
+   * 1. freqItems - only stores the string value, not the frequency count. To be used for generating candidate item sets
+   * 2. allFrequentItemsets - stores both string and frequency. Used to generate association rules.
+   */
   private static void readFrequentItemsFromFile(String filename) { 
     freqItems = new ArrayList<String>(); 
     Map<String, Integer> freqItemset = new HashMap<String, Integer>(); 
@@ -87,12 +114,22 @@ public class Apriori {
     allFrequentItemsets.add(freqItemset); 
   } 
 
+  /*
+   * Accepts: A string array of items
+   * Returns: A string of the items joined together with a , delimiter
+   * Purpose: Sorts and removes duplicates, and joins items into an item set
+   */
   public static String combineStrings(String[] strings) { 
     Arrays.sort(strings); 
     Arrays.stream(strings).distinct(); 
     return String.join(",", strings); 
   } 
 
+  /*
+   * Accepts: None, but reads data from the freqItems data structure, which contains data from the previous reducer run
+   * Returns: None, but creates candidate pairs for next mapper run
+   * Purpose: Implements Apriori Algorithm to create all potential candidate item sets of n+1, to be mapped for frequency support count
+   */
   private static void getCandidateItems() { 
     candidateItems = new ArrayList<String>(); 
     for(int i=0; i<freqItems.size(); i++) { 
@@ -125,21 +162,12 @@ public class Apriori {
       } 
     } 
   } 
- 
-  public static boolean checkFrequency(int sum, int total) { 
-    /*     
-    double s = 1.0 * sum/total; 
-    if(s >=  apriori.supportThreshold) 
-      return true; 
-    else 
-      return false; 
-    */ 
-    if (sum>=supportFrequency) 
-      return true; 
-    else 
-      return false; 
-  } 
 
+  /*
+   * Accepts: None, but reads all the parameters needed for map reduce (Passnum, total_read, supportFrequency, candidateitems)
+   * Returns: None, but writes to file the map reduce output
+   * Purpose: Controls the execution of the map reduce jobs.
+   */
   private static void findFrequentItems() { 
     try { 
       Configuration conf = new Configuration(); 
@@ -163,7 +191,7 @@ public class Apriori {
 
       //Find k-item sets 
       passNumber = 2; 
-	total_read = 0;
+      total_read = 0;
       getFrequentPairs(); 
       while(candidateItems.size() > 0) { 
         //Map Reduce 
@@ -182,7 +210,6 @@ public class Apriori {
         success = createJob(inputFile, outputDir,"apriori_map.aprioriMapper","apriori_map.aprioriReducer",conf); 
         if(success == true) 
               System.err.println("\nPass " + passNumber + " Completed Succesfully\n"); 
-
         else  
           System.err.println("\nPass " + passNumber + " Failed \n"); 
 
@@ -200,6 +227,11 @@ public class Apriori {
     }   
   } 
  
+  /*
+   * Accepts: All parameters needed for a map reduce job
+   * Returns: True, if job ran successfully; False, if job failed
+   * Purpose: Executes map reduce jobs
+   */
   public static boolean createJob(String input, String output,String aprioriMapper, String aprioriReducer,  Configuration conf){ 
     boolean success = false; 
 
@@ -223,9 +255,15 @@ public class Apriori {
     return success; 
   } 
 
+  /*
+   * Accepts: None
+   * Returns: None
+   * Purpose: Controls the execution of the all the classes
+   */
   public static void main(String[] args) throws InterruptedException, ClassNotFoundException { 
     findFrequentItems(); 
     AssociationRules rules = new AssociationRules(allFrequentItemsets, confidence); 
     rules.displayAssociationRules(); 
+    rules.writeAssociationRulesToFile(associationRulesOutput);
   } 
 }

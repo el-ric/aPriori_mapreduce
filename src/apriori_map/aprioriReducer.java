@@ -11,22 +11,24 @@ public class aprioriReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
         private static int total_read = 0;
         private static int supportFrequency = 0;
         
-    	public static boolean checkFrequency(int sum, int supportFrequency) {
-    		/*		
-    		double s = 1.0 * sum/total;
-    		if(s >=  apriori.supportThreshold)
-    			return true;
-    		else
-    			return false;
-    		*/
-    		
+        /*
+         * Accepts: Count of each item set, and support frequency determined by the user
+         * Returns: True, if count >= support frequency, False, if not
+         * Purpose: Determines if an item set should be considered as "frequent"
+         */
+
+    	public static boolean checkFrequency(int sum, int supportFrequency) {    		
     		if (sum>=supportFrequency)
     			return true;
     		else
     			return false;
     	}
     	
-    	
+    	 /*
+    	   * Accepts: Generic parameters for a reducer job
+    	   * Returns: None, but writes reducer output data to file
+    	   * Purpose: Reads data written by the mapper into the context, and performs the reducer function
+    	   */
         public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
         	int sum = 0;
             

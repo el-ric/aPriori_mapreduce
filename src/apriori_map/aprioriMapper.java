@@ -17,11 +17,12 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
         private static int passNum = 0;
         private static int total_read = 0;
         private static ArrayList<String> candidateItemsetMap  = new ArrayList<String>();        
-        
-        public void configure(JobConf job) {
-        	passNum = job.getInt("apriori.passNumber",-10);
-        }
-        
+
+        /*
+         * Accepts: Map reduce job context (information needed for the mapper)
+         * Returns: None, but assigns the general parameter values of the mapper
+         * Purpose: Initializes the mapper
+         */
         @Override
 		public void setup(Context context) throws IOException {
         	Configuration conf = context.getConfiguration();
@@ -36,10 +37,13 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
 	        	}
         	}
         }
+        
+        /*
+         * Accepts: Generic map reduce parameters
+         * Returns: None
+         * Purpose: Writes data to the context, which can be picked up be the reducer
+         */
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-
-        	//candidateItemset = apriori.candidateItems;   
-        	
         	if(passNum == 1) { // Perform word count for first pass
 	        	String[] itr = value.toString().split(","); //Break string into words
 	                for(String item: itr) { 
@@ -68,6 +72,11 @@ public class aprioriMapper extends Mapper<Object, Text, Text, IntWritable> {
         	context.getConfiguration().setInt("total_read", context.getConfiguration().getInt("total_read",0) + 1);       
         }
         
+        /*
+         * Accepts: Basket and items
+         * Returns: True if items are in the basket, False if not
+         * Purpose: Checks if the candidate item set is contained in the line of text from the input file
+         */  
         private boolean isItemInBasket(String items, String basket) {
     		String[] itemSet = items.split(",");
     		String[] basketSet = basket.split(",");

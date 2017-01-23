@@ -1,5 +1,7 @@
 package apriori_map;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,12 +11,22 @@ public class AssociationRules {
 	public static double confidence;
 	public static ArrayList<Map<String, Integer>> allFrequentItemsets = new ArrayList<Map<String, Integer>>();
 	public static ArrayList<String[]> associationRules = new ArrayList<String[]>(); //Format: (String[0] = A, String[1] = B, String[2] = C) => A -> B, confidence C
-
+	
+	 /*
+	   * Accepts: Necessary variables to generate association rules
+	   * Returns: None
+	   * Purpose: Constructor to initialize Association Rules class
+	   */
 	public AssociationRules(ArrayList<Map<String, Integer>> data, double confidenceTreshold) {
 		confidence = confidenceTreshold;
 		allFrequentItemsets = data;
 	}
 	
+	 /*
+	   * Accepts: None
+	   * Returns: None
+	   * Purpose: Displays the results of the association rules in the console
+	   */
 	public void displayAssociationRules() {
 		findAssociationRules();
 		System.out.println("\n==== Association Rules ====\n");
@@ -24,6 +36,30 @@ public class AssociationRules {
 		}
 	}
 	
+	 /*
+	   * Accepts: Filename String
+	   * Returns: None, but outputs data to file
+	   * Purpose: Writes all association rules to the specified file
+	   */
+	public void writeAssociationRulesToFile(String filename) { 
+		findAssociationRules();
+		    try { 
+		      BufferedWriter bWriter = new BufferedWriter(new FileWriter(filename)); 
+				for(int i=0; i<associationRules.size(); i++) {
+					String[] rule = associationRules.get(i);
+					bWriter.write(rule[0] + " -> " + rule[1] + "\t" + rule[2] + "\n");
+				}
+		    } 
+		    catch (Exception e) { 
+		      System.out.println("Error reading input file."); 
+		    } 
+	} 
+	
+	 /*
+	   * Accepts: None
+	   * Returns: None
+	   * Purpose: Manages the generation of association rules based on the data
+	   */
 	private static void findAssociationRules() {
 		try {
 			if(allFrequentItemsets.size() >= 2)
@@ -33,11 +69,14 @@ public class AssociationRules {
 			if(allFrequentItemsets.size() >= 4)
 				findRulesForQuadruples();
 		}
-		catch (NullPointerException e) {
-			// Ignore null pointer exceptions
-		}
+		catch (NullPointerException e) {}
 	}
 	
+	 /*
+	   * Accepts: An item set and a basket
+	   * Returns: Returns items in the basket that are not in the item set
+	   * Purpose: It finds the right side of the association rule
+	   */
 	private static String getAssociation(String itemset, String basket) {
 		String[] items  = itemset.split(",");
 		String[] basketItems = basket.split(",");
@@ -63,7 +102,11 @@ public class AssociationRules {
 		return remainingItems;
 	}
 	
-	// Returns all combinations in an array list of 2D Strings containing left and right part of association rules
+	/*
+	 * Accepts: An item set and an integer size
+	 * Returns: An list of all combinations of potential association rules, each combination is a 2D Strings
+	 * Purpose: Generates all combinations of associations rules for a certain size which represents the length of the left side of the association rule
+	 */
 	public static ArrayList<String[]> getCombinations(String string, int size) {
 		ArrayList<String[]> assRules = new ArrayList<String[]>();
 		String[] items  = string.split(",");
@@ -79,21 +122,25 @@ public class AssociationRules {
 						comb = comb + "," + items[k];
 					}
 
-				if(comb.split(",").length == size) {
-					String associatedItems = getAssociation(comb, string);
+				if(comb.split(",").length == size) { //An additional check to make sure the item set has the correct number of items
+					String associatedItems = getAssociation(comb, string); //Get right hand side values (comb is the left hand side of association rule)
 					String[] association = new String[2];
 					association[0] = comb;
 					association[1] = associatedItems;
 					assRules.add(association);
-					
 				}
 			}
 		}
 		return assRules;
 	}
 	
+	 /*
+	   * Accepts: None, but reads data from allFrequentItemsets
+	   * Returns: None, but adds association rules for frequent pairs to associationRules
+	   * Purpose: Parses through the frequent pairs and finds all association rules that meet the user specified confidence
+	   */
 	private static void findRulesForPairs() {
-		// Create Data structures for data
+		// Create data structure to store frequent items and frequent pairs
 		Map itemset = new HashMap<String, Integer>();
 		Map freqItems = new HashMap<String, Integer>();
 		itemset = allFrequentItemsets.get(1);
@@ -104,9 +151,8 @@ public class AssociationRules {
 	        Map.Entry pair = (Map.Entry)it.next();
 	        String[] items = pair.getKey().toString().split(",");
 	        
-	        int supportAandB = pair.getValue().hashCode();
+	        int supportAandB = pair.getValue().hashCode(); //getValue.hashcode <-- converts value from Map.Entry to integer
 	        int supportA = freqItems.get(items[0]).hashCode();
-
 	        double c = 1.0 * supportAandB/supportA;
 	        
 	        //Add rule if it meets confidence criteria
@@ -119,11 +165,14 @@ public class AssociationRules {
 	        
 	        if(c>=confidence)
 	        	addRule(items[1], items[0], c);
-
-	    }
-			
+	    }	
 	}
 	
+	 /*
+	   * Accepts: Two strings and a double (an association rule and its confidence)
+	   * Returns: None
+	   * Purpose: Converts the association rule to the required format and adds it to the data structure associationRules (which holds all the association rules)
+	   */
 	private static void addRule(String a, String b, double c) {
 		String[] rule = new String[3];
     	rule[0] = a;
@@ -132,8 +181,13 @@ public class AssociationRules {
     	associationRules.add(rule);	 
 	}
 	
+	 /*
+	   * Accepts: None, but reads data from allFrequentItemsets
+	   * Returns: None, but adds association rules for frequent triples to associationRules
+	   * Purpose: Parses through the frequent triples and finds all association rules that meet the user specified confidence
+	   */
 	private static void findRulesForTriples() {
-		//Create Data structures for Data
+		//Create data structures to store frequent item sets of different values of k (pairs, triples)
 		Map itemset = new HashMap<String, Integer>();
 		Map freqPairs = new HashMap<String, Integer>();
 		Map freqItems = new HashMap<String, Integer>();
@@ -141,6 +195,7 @@ public class AssociationRules {
 		freqPairs = allFrequentItemsets.get(1);		
 		freqItems = allFrequentItemsets.get(0);
 		
+		//Create an iterator to parse through the frequent triples
 		Iterator it = itemset.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Map.Entry line = (Map.Entry)it.next();
@@ -169,7 +224,13 @@ public class AssociationRules {
 	    }
 	}
 	
+	/*
+	   * Accepts: None, but reads data from allFrequentItemsets
+	   * Returns: None, but adds association rules for frequent quadruples to associationRules
+	   * Purpose: Parses through the frequent quadruples and finds all association rules that meet the user specified confidence
+	   */
 	private static void findRulesForQuadruples() {
+		//Create data structures to store frequent item sets of different values of k (pairs, triples, quadruples)
 		Map itemset = new HashMap<String, Integer>();
 		Map freqTriples = new HashMap<String, Integer>();
 		Map freqPairs = new HashMap<String, Integer>();
@@ -179,6 +240,7 @@ public class AssociationRules {
 		freqPairs = allFrequentItemsets.get(1);		
 		freqItems = allFrequentItemsets.get(0);
 		
+		//Create an iterator to parse through the frequent quadruples
 		Iterator it = itemset.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Map.Entry line = (Map.Entry)it.next();
