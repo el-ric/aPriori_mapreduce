@@ -20,24 +20,7 @@ public class AssociationRules {
 	public AssociationRules(ArrayList<Map<String, Integer>> data, double confidenceTreshold) {
 		confidence = confidenceTreshold;
 		allFrequentItemsets = data;
-	}
-	
-	
-	 /*
-	   * Accepts: None
-	   * Returns: None
-	   * Purpose: Manages the generation of association rules based on the data
-	   */
-	public void findAssociationRules() {
-		try {
-			if(allFrequentItemsets.size() >= 2)
-				findRulesForPairs();
-			if(allFrequentItemsets.size() >= 3)
-				findRulesForTriples();
-			if(allFrequentItemsets.size() >= 4)
-				findRulesForQuadruples();
-		}
-		catch (NullPointerException e) {}
+		findAssociationRules();
 	}
 	
 	 /*
@@ -72,6 +55,24 @@ public class AssociationRules {
 		    } 
 		   
 	} 
+	
+	
+	 /*
+	   * Accepts: None
+	   * Returns: None
+	   * Purpose: Manages the generation of association rules based on the data
+	   */
+	private void findAssociationRules() {
+		try {
+			if(allFrequentItemsets.size() >= 2)
+				findRulesForPairs();
+			if(allFrequentItemsets.size() >= 3)
+				findRulesForTriples();
+			if(allFrequentItemsets.size() >= 4)
+				findRulesForQuadruples();
+		}
+		catch (NullPointerException e) {}
+	}
 	
 	 /*
 	   * Accepts: An item set and a basket
